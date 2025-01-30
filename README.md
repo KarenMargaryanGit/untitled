@@ -1,26 +1,3 @@
-
-bla
-bla
-bla
-bla
-bla
-bla
-bla
-bla
-bla
-bla
-bla
-bla
-bla
-bla
-bla
-bla
-bla
-
-
-
-prodeco.am;cas2k16.ameriabank.am;confluence.ameriabank.am;*.ameriabank.am;*.ameria-bank.am;*.ameriabank.local;*.ameriagroup.am;*.ameriaonline.am;*.myameria.am;services.nasdaqomx.am;fxlimits.amx.net;10.115.30.*;172.16.75.*;172.16.76.*;172.16.83.13;192.168.99.*;192.168.199.*;172.16.178.*;172.16.179.*;172.16.188.*;192.168.197.60;192.168.197.160;172.16.194.15;192.168.23*;192.168.225*;10.100.65.100;100.39.143.111;100.39.143.110;SRV-SQL16-CRM1;SRV-SQL16-CRM2;ccagent.ameriabank.am;myameria.am
-
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
