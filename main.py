@@ -1,7 +1,21 @@
+
+
+
+
+
+
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+grouped_[col] = grouped_[col].apply(
+                lambda value: f"<div style='width:100%; background:lightgray;'>"
+                            f"<div style='width:{(value) / (max_value) * 100}%; background:rgba(0, 0, 255, 0.5); margin-right: {-min_value/(max_value-min_value)}%;'></div>{value}</div>"
+                            if value >= 0 else
+                            f"<div style='width:100%; background:lightgray;'>"
+                            f"<div style='width:{abs((value) / (min_value) * 100)}%; background:rgba(255, 0, 0, 0.5);  margin-left: {-min_value/(max_value-min_value)}%'>{value}</div></div>")
+                            
+
 
 # Load data
 df = pd.read_csv('example.csv')
