@@ -1,53 +1,48 @@
-import pandas as pd
 import numpy as np
-from tqdm import tqdm
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
 
-# Initialize a list to store the new rows
-rows = []
-
-# Group by 'FCLICODE'
-grouped = df.groupby('FCLICODE')
-
-for client_code, temp_df in tqdm(grouped):
-    temp_df = temp_df.sort_values(by='ReportDate')
+def plot_cluster_heatmap(features, labels, cmap="coolwarm", center=0):
+    """
+    Plots a heatmap of cluster centers with clusters as columns and features as rows.
     
-    for key in ['Bonds', 'Demand Deposits', 'Time Deposit']:
-        row_dict = {
-            'FCLICODE': client_code,
-            'Start Balance': 0,
-            'New Clients': 0,
-            'Closed Clients': 0,
-            'From other': 0,
-            'Spch': 0,
-            'End Balance': 0,
-            'Category': key,
-        }
+    Parameters:
+    - features: DataFrame of numerical features.
+    - labels: Cluster labels (Series or array).
+    - cmap: Colormap for the heatmap.
+    - center: Center value for heatmap color scaling.
+    """
+    # Standardize features
+    scaler = StandardScaler()
+    features_scaled = pd.DataFrame(scaler.fit_transform(features), 
+                                   index=features.index, 
+                                   columns=features.columns)
 
-        if temp_df.shape[0] == 1:
-            temp_date = temp_df['ReportDate'].iloc[0].replace('-', '')
-            if temp_date == startDate:
-                row_dict['Closed Clients'] = temp_df[key].iloc[0]
-                row_dict['Start Balance'] = temp_df[key].iloc[0]
-            elif temp_date == endDate:
-                row_dict['New Clients'] = temp_df[key].iloc[0]
-                row_dict['End Balance'] = temp_df[key].iloc[0]
-        else:
-            row_dict['Start Balance'] = temp_df[key].iloc[0]
-            row_dict['End Balance'] = temp_df[key].iloc[1]
+    # Compute cluster centers
+    cluster_centers_scaled = features_scaled.groupby(labels).mean()
+    cluster_centers = features.groupby(labels).mean()
+    
+    # Sort clusters by mean value (optional)
+    sorted_clusters = cluster_centers_scaled.mean(axis=1).sort_values(ascending=False).index
+    cluster_centers_scaled = cluster_centers_scaled.loc[sorted_clusters]
+    cluster_centers = cluster_centers.loc[sorted_clusters]
 
-            sum1 = temp_df.iloc[1][2:].sum() - temp_df.iloc[1][key]
-            sum2 = temp_df.iloc[0][2:].sum() - temp_df.iloc[0][key]
+    # Transpose for heatmap: Features as rows, clusters as columns
+    cluster_centers_scaled = cluster_centers_scaled.T
+    cluster_centers = cluster_centers.T
 
-            balance_diff = row_dict['End Balance'] - row_dict['Start Balance']
-            sum_diff = sum2 - sum1
+    # Format annotation data
+    annot_data = cluster_centers.map(lambda x: f"{x:,.0f}" if x >= 1e3 else f"{x:.1f}")
 
-            if (balance_diff > 0 and sum_diff < 0) or (balance_diff < 0 and sum_diff > 0):
-                row_dict['From other'] = (
-                    min(abs(balance_diff), abs(sum_diff)) * (1 if balance_diff > 0 else -1)
-                )
-            row_dict['Spch'] = balance_diff - row_dict['From other']
+    # Plot heatmap
+    plt.figure(figsize=(12, 36))
+    sns.heatmap(cluster_centers_scaled, cmap=cmap, center=center, annot=annot_data.values, 
+                xticklabels=cluster_centers_scaled.columns, yticklabels=cluster_centers_scaled.index, 
+                linewidths=0.5, cbar=False, fmt="")
 
-        rows.append(row_dict)
-
-# Convert the list of rows into a DataFrame
-new_df = pd.DataFrame(rows)
+    plt.xticks(fontsize=8, rotation=0)
+    plt.yticks(fontsize=8, rotation=0)
+    plt.title("Cluster Centers Heatmap (Clusters as Columns, Features as Rows)")
+    plt.show()
