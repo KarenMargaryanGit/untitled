@@ -1,48 +1,20 @@
-import numpy as np
-import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import StandardScaler
+import numpy as np
 
-def plot_cluster_heatmap(features, labels, cmap="coolwarm", center=0):
-    """
-    Plots a heatmap of cluster centers with clusters as columns and features as rows.
-    
-    Parameters:
-    - features: DataFrame of numerical features.
-    - labels: Cluster labels (Series or array).
-    - cmap: Colormap for the heatmap.
-    - center: Center value for heatmap color scaling.
-    """
-    # Standardize features
-    scaler = StandardScaler()
-    features_scaled = pd.DataFrame(scaler.fit_transform(features), 
-                                   index=features.index, 
-                                   columns=features.columns)
+categories = ['Category A', 'Category B', 'Category C']
+values1 = [20, 35, 30]  # First set of values
+values2 = [15, 25, 20]  # Second set of values
+values3 = [10, 30, 10]  # Third set of values
 
-    # Compute cluster centers
-    cluster_centers_scaled = features_scaled.groupby(labels).mean()
-    cluster_centers = features.groupby(labels).mean()
-    
-    # Sort clusters by mean value (optional)
-    sorted_clusters = cluster_centers_scaled.mean(axis=1).sort_values(ascending=False).index
-    cluster_centers_scaled = cluster_centers_scaled.loc[sorted_clusters]
-    cluster_centers = cluster_centers.loc[sorted_clusters]
+fig, ax = plt.subplots()
 
-    # Transpose for heatmap: Features as rows, clusters as columns
-    cluster_centers_scaled = cluster_centers_scaled.T
-    cluster_centers = cluster_centers.T
+ax.barh(categories, values1, label='Value 1', color='white',edgecolor='black')
 
-    # Format annotation data
-    annot_data = cluster_centers.map(lambda x: f"{x:,.0f}" if x >= 1e3 else f"{x:.1f}")
+ax.barh(categories, values2, left=values1, label='Value 2', color='lightgreen',edgecolor='black')
 
-    # Plot heatmap
-    plt.figure(figsize=(12, 36))
-    sns.heatmap(cluster_centers_scaled, cmap=cmap, center=center, annot=annot_data.values, 
-                xticklabels=cluster_centers_scaled.columns, yticklabels=cluster_centers_scaled.index, 
-                linewidths=0.5, cbar=False, fmt="")
+ax.barh(categories, values3, left=np.array(values1) + np.array(values2), label='Value 3', color='white',edgecolor='black')
 
-    plt.xticks(fontsize=8, rotation=0)
-    plt.yticks(fontsize=8, rotation=0)
-    plt.title("Cluster Centers Heatmap (Clusters as Columns, Features as Rows)")
-    plt.show()
+
+ax.set_xticks([])  
+plt.margins(x=0)  
+plt.show()
