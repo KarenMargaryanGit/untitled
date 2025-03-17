@@ -1,26 +1,15 @@
-import matplotlib.pyplot as plt
-import numpy as np
+plt.plot(main['1'], main['2'], marker='o', label='Main', linestyle='-', color='b')
+plt.plot(other['1'], other['2'], marker='s', label='Other', linestyle='--', color='r')
+plt.plot(other1['1'], other1['2'], marker='^', label='Other1', linestyle='-.', color='g')
+plt.plot(other2['1'], other2['2'], marker='d', label='Other2', linestyle=':', color='purple')
 
-categories = ['Category A', 'Category B', 'Category C']
-values1 = [20, 35, 30]  # First set of values
-values2 = [15, 25, 20]  # Second set of values
-values3 = [10, 30, 10]  # Third set of values
+# Labels and title
+plt.xlabel('X-axis')
+plt.ylabel('Y-axis')
+plt.title('Multiple Data Series')
+plt.legend()
+plt.grid(True)
 
-fig, ax = plt.subplots()
-
-ax.barh(categories, values1, label='Value 1', color='white',edgecolor='black')
-
-bars2 = ax.barh(categories, values2, left=values1, label='Value 2', color='lightgreen', edgecolor='black')
-
-for i, (category, value) in enumerate(zip(categories, values2)):
-    # Calculate the position for the text
-    x_position = values1[i] + value / 2  # Center of the second bar segment
-    y_position = i  # y-position corresponds to the category index
-    ax.text(x_position, y_position, f'{value}', ha='center', va='center', color='black', fontsize=10)
-
-ax.barh(categories, values3, left=np.array(values1) + np.array(values2), label='Value 3', color='white',edgecolor='black')
-
-
-ax.set_xticks([])  
-plt.margins(x=0)  
+# Show plot
 plt.show()
+import matplotlib.pyplot as plt
