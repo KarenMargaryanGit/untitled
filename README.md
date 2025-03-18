@@ -1,15 +1,20 @@
-plt.plot(main['1'], main['2'], marker='o', label='Main', linestyle='-', color='b')
-plt.plot(other['1'], other['2'], marker='s', label='Other', linestyle='--', color='r')
-plt.plot(other1['1'], other1['2'], marker='^', label='Other1', linestyle='-.', color='g')
-plt.plot(other2['1'], other2['2'], marker='d', label='Other2', linestyle=':', color='purple')
+import json
+from bs4 import BeautifulSoup
 
-# Labels and title
-plt.xlabel('X-axis')
-plt.ylabel('Y-axis')
-plt.title('Multiple Data Series')
-plt.legend()
-plt.grid(True)
+# Load the HTML file
+with open("yourfile.html", "r", encoding="utf-8") as file:
+    html_content = file.read()
 
-# Show plot
-plt.show()
-import matplotlib.pyplot as plt
+# Parse the HTML
+soup = BeautifulSoup(html_content, "html.parser")
+
+# Extract data (example: extract key-value pairs)
+data = {}
+for item in soup.find_all("div", class_="item"):  # Adjust selector as needed
+    key = item.find("span", class_="key").text.strip()
+    value = item.find("span", class_="value").text.strip()
+    data[key] = value
+
+# Save to JSON
+with open("output.json", "w", encoding="utf-8") as json_file:
+    json.dump(data, json_file, indent=4)
