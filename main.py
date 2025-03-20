@@ -1,93 +1,60 @@
-def format_number(value):
-    if abs(value) < 1_000_000:
-        return f"{value/1_000:.1f}K"
-    elif abs(value) < 1_000_000_000:
-        return f"{value/1_000_000:.1f}M"
-    else:
-        return f"{value/1_000_000_000:.1f}B"
-
-
-
-
-
-import streamlit as st
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-grouped_[col] = grouped_[col].apply(
-                lambda value: f"<div style='width:100%; background:lightgray;'>"
-                            f"<div style='width:{(value) / (max_value) * 100}%; background:rgba(0, 0, 255, 0.5); margin-right: {min_value/(max_value-min_value)}%;'>{value}</div></div>"
-                            if value >= 0 else
-                            f"<div style='width:100%; background:lightgray;'>"
-                            f"<div style='width:{abs((value) / (min_value) * 100)}%; background:rgba(255, 0, 0, 0.5); margin-left: 0;'>{value}</div></div>"
-            )
+from sklearn.cluster import KMeans
+from sklearn.datasets import make_blobs
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import silhouette_score
 
-# Load data
-df = pd.read_csv('example.csv')
+# Generate synthetic data
+X, y = make_blobs(n_samples=300, centers=4, cluster_std=0.60, random_state=0)
 
-def show_top_losers():
-    top_losers = df.nsmallest(100, 'End Balance')
-    st.header('Top 100 Losers')
-    st.dataframe(top_losers)
-    fig1, ax1 = plt.subplots()
-    ax1.bar(top_losers['FCLICODE'], top_losers['End Balance'])
-    ax1.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
-    tick_positions = ax1.get_xticks()
-    tick_labels = top_losers['FCLICODE'].iloc[:len(tick_positions)]
-    ax1.set_xticklabels(tick_labels, rotation=90)
-    st.pyplot(fig1)
+# Standardize the data
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
 
-def show_top_gainers():
-    top_gainers = df.nlargest(100, 'End Balance')
-    st.header('Top 100 Gainers')
-    st.dataframe(top_gainers)
-    fig2, ax2 = plt.subplots()
-    ax2.bar(top_gainers['FCLICODE'], top_gainers['End Balance'])
-    ax2.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
-    tick_positions = ax2.get_xticks()
-    tick_labels = top_gainers['FCLICODE'].iloc[:len(tick_positions)]
-    ax2.set_xticklabels(tick_labels, rotation=90)
-    st.pyplot(fig2)
+# Elbow Method
+inertia_values = []
+cluster_range = range(1, 11)
+for k in cluster_range:
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    kmeans.fit(X_scaled)
+    inertia_values.append(kmeans.inertia_)
 
-def show_client_analysis():
-    st.header('Client Analysis')
-    
-    # Filter for FCLICODE
-    fclico_options = df['FCLICODE'].unique()
-    fclico_filter = st.multiselect('Filter by FCLICODE', options=fclico_options, default=None)
-    
-    if fclico_filter:
-        filtered_df = df[df['FCLICODE'].isin(fclico_filter)]
-        st.dataframe(filtered_df)
-        
-        fig, ax = plt.subplots(figsize=(10, 6))
-        for fclico in fclico_filter:
-            client_data = filtered_df[filtered_df['FCLICODE'] == fclico]
-            ax.plot(client_data.index, client_data['End Balance'], label=fclico)
-        
-        ax.set_xlabel('Index')
-        ax.set_ylabel('End Balance')
-        ax.set_title('End Balance per Client')
-        ax.legend(title='FCLICODE')
-        plt.xticks(rotation=45)
-        st.pyplot(fig)
-    else:
-        st.info('No FCLICODE selected. Displaying total End Balance per Category.')
-        total = df.groupby('Category')['End Balance'].sum().reset_index()
-        fig, ax = plt.subplots(figsize=(10, 6))
-        ax.plot(total['Category'], total['End Balance'], marker='o')
-        ax.set_xlabel('Category')
-        ax.set_ylabel('Total End Balance')
-        ax.set_title('Total End Balance by Category')
-        plt.xticks(rotation=45)
-        st.pyplot(fig)
+plt.figure(figsize=(8, 5))
+plt.plot(cluster_range, inertia_values, marker='o', linestyle='--')
+plt.xlabel('Number of Clusters')
+plt.ylabel('Inertia')
+plt.title('Elbow Method For Optimal k')
+plt.show()
 
-# Sidebar for navigation
-page = st.sidebar.selectbox("Select Page", ["Top Losers", "Top Gainers", "Client Analysis"])
+# Silhouette Score
+silhouette_scores = []
+for k in range(2, 11):
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    kmeans.fit(X_scaled)
+    score = silhouette_score(X_scaled, kmeans.labels_)
+    silhouette_scores.append(score)
 
-if page == "Top Losers":
-    show_top_losers()
-elif page == "Top Gainers":
-    show_top_gainers()
-elif page == "Client Analysis":
-    show_client_analysis()
+plt.figure(figsize=(8, 5))
+plt.plot(range(2, 11), silhouette_scores, marker='o', linestyle='--')
+plt.xlabel('Number of Clusters')
+plt.ylabel('Silhouette Score')
+plt.title('Silhouette Score For Optimal k')
+plt.show()
+
+# Apply K-Means with optimal k
+optimal_k = 4
+kmeans = KMeans(n_clusters=optimal_k, random_state=42)
+kmeans.fit(X_scaled)
+labels = kmeans.labels_
+centroids = kmeans.cluster_centers_
+
+plt.figure(figsize=(8, 6))
+plt.scatter(X_scaled[:, 0], X_scaled[:, 1], c=labels, cmap='viridis', s=50, alpha=0.7)
+plt.scatter(centroids[:, 0], centroids[:, 1], c='red', marker='x', s=200, label='Centroids')
+plt.xlabel('Feature 1')
+plt.ylabel('Feature 2')
+plt.title('K-Means Clustering')
+plt.legend()
+plt.show()
