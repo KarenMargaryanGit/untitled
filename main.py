@@ -1,13 +1,11 @@
 import pandas as pd
 import numpy as np
-from collections import defaultdict
+from datetime import timedelta
 
-# Convert to datetime if not already
+# Prepare data
 df['datetime'] = pd.to_datetime(df['datetime'])
 df['date'] = df['datetime'].dt.date
-
-# Sort by person, date, and time to get proper sequences
-df = df.sort_values(['code', 'date', 'datetime'])
+df = df.sort_values(['code', 'datetime'])
 
 # Get all unique sectors
 sectors = sorted(df['sector'].unique())
@@ -17,15 +15,33 @@ n_sectors = len(sectors)
 # Initialize count matrix
 count_matrix = np.zeros((n_sectors, n_sectors))
 
-# Group by person and date to get daily sequences per person
-for (person, date), daily_trans in df.groupby(['code', 'date']):
-    sectors_sequence = daily_trans['sector'].values
+# Get all unique person-date combinations
+person_dates = df[['code', 'date']].drop_duplicates().sort_values(['code', 'date'])
+
+# Create 3-day sequences for each person
+for person in df['code'].unique():
+    person_dates_subset = person_dates[person_dates['code'] == person]
+    dates = sorted(person_dates_subset['date'].unique())
     
-    # Count transitions for this person on this day
-    for i in range(len(sectors_sequence) - 1):
-        from_sector = sectors_sequence[i]
-        to_sector = sectors_sequence[i+1]
-        count_matrix[sector_index[from_sector], sector_index[to_sector]] += 1
+    # Create sliding window of 3 consecutive days
+    for i in range(len(dates) - 2):
+        day1, day2, day3 = dates[i], dates[i+1], dates[i+2]
+        
+        # Check if days are consecutive (optional)
+        # if (day2 - day1 == timedelta(days=1)) and (day3 - day2 == timedelta(days=1)):
+        
+        # Get transactions for this 3-day window
+        window_trans = df[(df['code'] == person) & 
+                         (df['date'].isin([day1, day2, day3]))]
+        
+        # Sort by datetime and process transitions
+        sectors_sequence = window_trans.sort_values('datetime')['sector'].values
+        
+        # Count all transitions in the 3-day window
+        for j in range(len(sectors_sequence) - 1):
+            from_sector = sectors_sequence[j]
+            to_sector = sectors_sequence[j+1]
+            count_matrix[sector_index[from_sector], sector_index[to_sector]] += 1
 
 # Convert counts to probabilities
 transition_matrix = np.zeros_like(count_matrix)
@@ -41,5 +57,5 @@ transition_df = pd.DataFrame(transition_matrix,
                            index=sectors,
                            columns=sectors)
 
-print("Person- and Day-Aware Transition Matrix:")
+print("3-Day Sequence Transition Matrix:")
 print(transition_df.round(3))
